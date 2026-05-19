@@ -1,73 +1,31 @@
-# React + TypeScript + Vite
+# 🎮 Proxy Task (Terminal)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplikasi web modern untuk melacak rutinitas (Daily, Weekly, Endgame) di berbagai game *gacha*. Dibuat dengan antarmuka bertema *sci-fi/terminal* yang ramping dan responsif. Aplikasi ini memiliki sistem *auto-reset* otomatis berdasarkan jadwal *server* masing-masing game.
 
-Currently, two official plugins are available:
+## ✨ Fitur Utama
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Sistem Autentikasi Aman:** Login dan Registrasi menggunakan Email (didukung OTP 6-digit & Reset Password).
+- **Katalog Game Bawaan:** Mendukung *Wuthering Waves, Zenless Zone Zero, Arknights Endfield,* dan *P5X* (mudah untuk ditambah/dikustomisasi).
+- **Bulk Insert:** Tambahkan semua misi dari satu game sekaligus dengan satu klik.
+- **Penghitung Mundur (Countdown) Real-Time:** Menampilkan sisa waktu presisi sebelum suatu misi di-*reset*.
+- **Smart Notification Panel:** Panel *collapse* (bisa ditutup/buka) untuk mengingatkan misi mendesak yang tenggat waktunya $\le$ 3 hari.
+- **Auto-Reset di Backend:** Menggunakan *CRON Job* dari Supabase untuk mereset *checkbox* otomatis berdasarkan tenggat waktu, tanpa perlu campur tangan pengguna.
+- **UI/UX Interaktif:** Dilengkapi dengan pop-up *SweetAlert2* kustom bertema gelap dan ikon dari *React Icons*.
 
-## React Compiler
+## 🛠️ Teknologi yang Digunakan
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React (TypeScript) + Vite
+- **Styling:** Tailwind CSS (v3)
+- **Backend & Database:** Supabase (PostgreSQL + Auth + pg_cron)
+- **Icons & Alerts:** `react-icons`, `sweetalert2`
+- **Hosting/Deployment:** Netlify
 
-## Expanding the ESLint configuration
+## 🚀 Cara Menjalankan Secara Lokal (Local Setup)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 1. Persiapan Kebutuhan
+Pastikan Anda sudah menginstal [Node.js](https://nodejs.org/) dan memiliki akun [Supabase](https://supabase.com/).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 2. Kloning Repositori
+```bash
+git clone [https://github.com/USERNAME_KAMU/NAMA_REPO_KAMU.git](https://github.com/USERNAME_KAMU/NAMA_REPO_KAMU.git)
+cd NAMA_REPO_KAMU
