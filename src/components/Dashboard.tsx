@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import Swal from "sweetalert2";
+import { HiBellAlert } from "react-icons/hi2";
 
 interface Task {
   id: string;
@@ -18,19 +19,19 @@ const GAME_CATALOG: Record<
 > = {
   "Wuthering Waves": [
     {
-      name: "Daily Missions",
+      name: "Daily",
       type: "daily",
       interval: 1,
       anchor: "2026-05-01T20:00:00Z",
     },
     {
-      name: "Weekly Boss",
+      name: "Weekly FOTG",
       type: "weekly",
       interval: 7,
       anchor: "2026-05-03T20:00:00Z",
     },
     {
-      name: "ToA: Hazard",
+      name: "Tower of Adversity",
       type: "endgame",
       interval: 28,
       anchor: "2026-04-26T20:00:00Z",
@@ -41,10 +42,69 @@ const GAME_CATALOG: Record<
       interval: 28,
       anchor: "2026-05-10T20:00:00Z",
     },
+
+    {
+      name: "Endstate Matrix",
+      type: "endgame",
+      interval: 31,
+      anchor: "2026-05-07T20:00:00Z",
+    },
+  ],
+  "Genshin Impact": [
+    {
+      name: "Daily",
+      type: "daily",
+      interval: 1,
+      anchor: "2026-05-01T20:00:00Z",
+    },
+    {
+      name: "Spiral Abyss",
+      type: "endgame",
+      interval: 30,
+      anchor: "2026-05-15T20:00:00Z",
+    },
+    {
+      name: "Imaginarium Theater",
+      type: "endgame",
+      interval: 30,
+      anchor: "2026-05-31T20:00:00Z",
+    },
+  ],
+  "Honkai Star Rail": [
+    {
+      name: "Daily",
+      type: "daily",
+      interval: 1,
+      anchor: "2026-05-01T20:00:00Z",
+    },
+    {
+      name: "Weekly",
+      type: "weekly",
+      interval: 7,
+      anchor: "2026-05-03T20:00:00Z",
+    },
+    {
+      name: "Memory of Chaos",
+      type: "endgame",
+      interval: 42,
+      anchor: "2026-05-24T20:00:00Z",
+    },
+    {
+      name: "Pure Fiction",
+      type: "endgame",
+      interval: 42,
+      anchor: "2026-05-10T20:00:00Z",
+    },
+    {
+      name: "Apocalyptic Shadow",
+      type: "endgame",
+      interval: 42,
+      anchor: "2026-04-26T20:00:00Z",
+    },
   ],
   "Zenless Zone Zero": [
     {
-      name: "Daily Errands",
+      name: "Daily",
       type: "daily",
       interval: 1,
       anchor: "2026-05-01T20:00:00Z",
@@ -70,13 +130,13 @@ const GAME_CATALOG: Record<
   ],
   "Arknights Endfield": [
     {
-      name: "Daily Missions",
+      name: "Daily",
       type: "daily",
       interval: 1,
       anchor: "2026-05-01T20:00:00Z",
     },
     {
-      name: "Weekly Missions",
+      name: "Weekly",
       type: "weekly",
       interval: 7,
       anchor: "2026-05-03T20:00:00Z",
@@ -84,13 +144,13 @@ const GAME_CATALOG: Record<
   ],
   P5X: [
     {
-      name: "Daily Schedule",
+      name: "Daily",
       type: "daily",
       interval: 1,
       anchor: "2026-05-01T20:00:00Z",
     },
     {
-      name: "Weekly Metaverse",
+      name: "Weekly",
       type: "weekly",
       interval: 7,
       anchor: "2026-05-03T20:00:00Z",
@@ -130,9 +190,9 @@ const getRemainingTime = (resetDate: string, now: Date) => {
 };
 
 const swalDark = Swal.mixin({
-  background: "#1f2937", // Warna bg-gray-800
+  background: "#1f2937",
   color: "#ffffff",
-  confirmButtonColor: "#52C6F5", // Warna primary
+  confirmButtonColor: "#52C6F5",
 });
 
 export default function Dashboard({ userId }: { userId: string }) {
@@ -142,6 +202,9 @@ export default function Dashboard({ userId }: { userId: string }) {
 
   const [selectedGame, setSelectedGame] = useState(GAMES[0]);
   const [selectedTaskName, setSelectedTaskName] = useState("ALL");
+
+  // STATE BARU: Untuk mengatur buka/tutup panel notifikasi
+  const [isUrgentOpen, setIsUrgentOpen] = useState(false);
 
   useEffect(() => {
     setSelectedTaskName("ALL");
@@ -273,14 +336,13 @@ export default function Dashboard({ userId }: { userId: string }) {
   };
 
   const deleteTask = async (id: string) => {
-    // Tambahkan konfirmasi SweetAlert sebelum menghapus
     const result = await swalDark.fire({
       title: "Hapus Tugas?",
       text: "Data yang dihapus tidak bisa dikembalikan!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#ef4444", // Merah untuk bahaya
-      cancelButtonColor: "#6b7280", // Abu-abu
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
       confirmButtonText: "Ya, Hapus!",
       cancelButtonText: "Batal",
     });
@@ -291,50 +353,99 @@ export default function Dashboard({ userId }: { userId: string }) {
     }
   };
 
-  // 1. FILTER TUGAS MENDESAK (Belum Selesai & Sisa Waktu <= 3 Hari)
+  const deleteAllTasksForGame = async (gameName: string) => {
+    const result = await swalDark.fire({
+      title: `Hapus semua misi ${gameName}?`,
+      text: "Seluruh tugas pada game ini akan dihapus permanen!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Ya, Bersihkan!",
+      cancelButtonText: "Batal",
+    });
+
+    if (result.isConfirmed) {
+      setTasks(tasks.filter((t) => t.game_name !== gameName));
+      await supabase.from("user_tasks").delete().eq("game_name", gameName);
+      swalDark.fire({
+        icon: "success",
+        title: "Terhapus",
+        text: `Daftar tugas ${gameName} telah dibersihkan.`,
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    }
+  };
+
   const urgentTasks = tasks.filter((task) => {
     if (task.is_completed) return false;
     const target = new Date(task.next_reset).getTime();
     const now = currentTime.getTime();
     const diff = target - now;
-    // Cek apakah selisih waktunya lebih dari 0 dan kurang dari atau sama dengan 3 hari (dalam milidetik)
     return diff > 0 && diff <= 3 * 24 * 60 * 60 * 1000;
   });
 
   return (
     <div className="space-y-8">
-      {/* 2. PANEL NOTIFIKASI MENDESAK */}
+      {/* NOTIFICATION COLLAPSE */}
       {!loading && urgentTasks.length > 0 && (
-        <div className="rounded-xl border border-accent bg-accent/10 p-5 shadow-[0_0_15px_rgba(255,148,82,0.15)]">
-          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-accent">
-            <span>⚠️</span> Perhatian: Tenggat Waktu Dekat!
-          </h2>
-          <div className="grid gap-2 md:grid-cols-2">
-            {urgentTasks.map((task) => (
-              <div
-                key={`urgent-${task.id}`}
-                className="flex items-center justify-between rounded bg-gray-900/50 p-3 text-sm border border-accent/20"
-              >
-                <div>
-                  <span className="font-bold text-white block">
-                    {task.game_name}
-                  </span>
-                  <span className="text-gray-300">{task.task_name}</span>
-                </div>
-                <div className="text-right">
-                  <span className="block font-semibold text-accent">
-                    {getRemainingTime(task.next_reset, currentTime)}
-                  </span>
-                  <button
-                    onClick={() => toggleTask(task.id, task.is_completed)}
-                    className="mt-1 rounded bg-accent/20 px-2 py-0.5 text-[10px] font-bold hover:bg-accent hover:text-dark transition"
-                  >
-                    Tandai Selesai
-                  </button>
+        <div className="overflow-hidden rounded-xl border border-accent bg-accent/10 shadow-[0_0_15px_rgba(255,148,82,0.15)] transition-all">
+          {/* Header & Tombol Toggle */}
+          <button
+            onClick={() => setIsUrgentOpen(!isUrgentOpen)}
+            className="flex w-full items-center justify-between p-5 transition-colors hover:bg-accent/20"
+          >
+            <h2 className="flex items-center gap-3 text-lg font-bold text-accent">
+              <HiBellAlert className="h-6 w-6 text-accent" />
+              Perhatian: Tenggat Waktu Dekat!
+              <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+                {urgentTasks.length} Misi
+              </span>
+            </h2>
+            {/* Ikon panah yang berputar sesuai state */}
+            <span
+              className={`text-accent transition-transform duration-300 ${isUrgentOpen ? "rotate-180" : ""}`}
+            >
+              ▼
+            </span>
+          </button>
+
+          {/* Area Konten (Tersembunyi/Muncul berdasarkan isUrgentOpen) */}
+          {isUrgentOpen && (
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${isUrgentOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}
+            >
+              <div className="border-t border-accent/20 p-5 pt-2">
+                <div className="grid gap-2 md:grid-cols-2">
+                  {urgentTasks.map((task) => (
+                    <div
+                      key={`urgent-${task.id}`}
+                      className="flex items-center justify-between rounded bg-gray-900/50 p-3 text-sm border border-accent/20"
+                    >
+                      <div>
+                        <span className="font-bold text-white block">
+                          {task.game_name}
+                        </span>
+                        <span className="text-gray-300">{task.task_name}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="block font-semibold text-accent">
+                          {getRemainingTime(task.next_reset, currentTime)}
+                        </span>
+                        <button
+                          onClick={() => toggleTask(task.id, task.is_completed)}
+                          className="mt-1 rounded bg-accent/20 px-2 py-0.5 text-[10px] font-bold hover:bg-accent hover:text-dark transition"
+                        >
+                          Tandai Selesai
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -395,13 +506,23 @@ export default function Dashboard({ userId }: { userId: string }) {
                 key={game}
                 className="rounded-xl border border-primary/20 bg-gray-900 p-5 shadow-lg"
               >
-                <h3 className="mb-4 flex items-center justify-between border-b border-gray-700 pb-2 text-lg font-bold text-white">
-                  {game}
-                  <span className="rounded bg-gray-800 px-2 py-1 text-xs text-accent">
-                    {gameTasks.filter((t) => t.is_completed).length} /{" "}
-                    {gameTasks.length} Selesai
-                  </span>
+                <h3 className="mb-4 flex flex-col gap-3 border-b border-gray-700 pb-3 sm:flex-row sm:items-center sm:justify-between text-lg font-bold text-white">
+                  <span>{game}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded bg-gray-800 px-2 py-1 text-xs text-accent">
+                      {gameTasks.filter((t) => t.is_completed).length} /{" "}
+                      {gameTasks.length} Selesai
+                    </span>
+                    <button
+                      onClick={() => deleteAllTasksForGame(game)}
+                      className="rounded bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-400 transition hover:bg-red-500 hover:text-white"
+                      title={`Hapus semua tugas ${game}`}
+                    >
+                      Hapus Semua
+                    </button>
+                  </div>
                 </h3>
+
                 <ul className="space-y-4">
                   {gameTasks.map((task) => (
                     <li
@@ -431,7 +552,7 @@ export default function Dashboard({ userId }: { userId: string }) {
                             </span>
                           </div>
                           <span className="mt-0.5 text-xs text-gray-400 flex items-center gap-1">
-                            {getRemainingTime(task.next_reset, currentTime)}
+                            ⏱ {getRemainingTime(task.next_reset, currentTime)}
                           </span>
                         </div>
                       </label>
